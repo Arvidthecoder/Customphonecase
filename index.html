@@ -1,222 +1,232 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="UTF-8" />
-  <title>Designa ditt telefonskal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<title>Designa ditt telefonskal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Fabric.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+<!-- Fabric -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
-  <style>
-    :root {
-      --bg: #0b0b0b;
-      --panel: #141414;
-      --border: #2a2a2a;
-      --text: #f2f2f2;
-      --muted: #9a9a9a;
-      --accent: #ffffff;
-    }
+<style>
+:root {
+  --bg: #0c0c0c;
+  --panel: #141414;
+  --border: #2a2a2a;
+  --text: #f5f5f5;
+  --muted: #9a9a9a;
+  --accent: #ffffff;
+}
 
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      overflow: hidden;
-    }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
 
-    /* Sidebar */
-    .sidebar {
-      width: 260px;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
-    .sidebar h1 {
-      font-size: 15px;
-      font-weight: 600;
-      margin: 0 0 12px;
-    }
+.sidebar h1 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
 
-    .btn {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      text-align: left;
-      transition: border-color .2s, background .2s;
-    }
+.btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+}
 
-    .btn:hover {
-      border-color: var(--accent);
-      background: rgba(255,255,255,0.03);
-    }
+.btn:hover {
+  border-color: var(--accent);
+}
 
-    .btn.small {
-      font-size: 13px;
-      padding: 8px 10px;
-    }
+input[type=file] {
+  display: none;
+}
 
-    input[type="file"] {
-      display: none;
-    }
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-    /* Main area */
-    .main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+.canvas-wrap {
+  background: #161616;
+  padding: 28px;
+  border-radius: 30px;
+  box-shadow: 0 40px 100px rgba(0,0,0,.6);
+}
 
-    .canvas-wrapper {
-      background: #161616;
-      padding: 28px;
-      border-radius: 28px;
-      box-shadow: 0 30px 80px rgba(0,0,0,.6);
-    }
+canvas {
+  background: #101010;
+  border-radius: 36px;
+}
 
-    canvas {
-      background: #0f0f0f;
-      border-radius: 32px;
-    }
-
-    /* Footer */
-    .footer {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-    }
-  </style>
+/* Footer */
+.footer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
+</style>
 </head>
+
 <body>
 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h1>Designa ditt skal</h1>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h1>Designverktyg</h1>
 
-    <label class="btn">
-      Ladda upp bild
-      <input type="file" id="uploadImage" accept="image/*">
-    </label>
+  <label class="btn">
+    Ladda upp bild
+    <input type="file" id="upload" accept="image/*">
+  </label>
 
-    <button class="btn small" id="deleteObject">Ta bort markerat</button>
-    <button class="btn small" id="zoomIn">Zoom +</button>
-    <button class="btn small" id="zoomOut">Zoom −</button>
-    <button class="btn small" id="resetView">Återställ vy</button>
+  <button class="btn" id="delete">Ta bort markerat</button>
+  <button class="btn" id="zoomIn">Zoom +</button>
+  <button class="btn" id="zoomOut">Zoom −</button>
+  <button class="btn" id="reset">Återställ vy</button>
+</div>
+
+<!-- CANVAS -->
+<div class="main">
+  <div class="canvas-wrap">
+    <canvas id="canvas" width="340" height="680"></canvas>
   </div>
+</div>
 
-  <!-- Canvas -->
-  <div class="main">
-    <div class="canvas-wrapper">
-      <canvas id="designer" width="320" height="640"></canvas>
-    </div>
-  </div>
+<!-- FOOTER -->
+<div class="footer">
+  <button class="btn">Klar (export senare)</button>
+</div>
 
-  <!-- Footer -->
-  <div class="footer">
-    <button class="btn">Klar (export kommer)</button>
-  </div>
+<script>
+/* =========================
+   CANVAS INIT (KRITISK DEL)
+   ========================= */
+const canvas = new fabric.Canvas('canvas', {
+  preserveObjectStacking: true,
+  selection: true
+});
 
-  <script>
-    const canvas = new fabric.Canvas('designer', {
-      preserveObjectStacking: true,
-      selection: true
+/* =========================
+   TRYCKYTA / TELEFON
+   ========================= */
+const printArea = new fabric.Rect({
+  left: 30,
+  top: 30,
+  width: 280,
+  height: 620,
+  rx: 46,
+  ry: 46,
+  fill: '#f7f7f7',
+  selectable: false,
+  evented: false
+});
+
+canvas.add(printArea);
+canvas.sendToBack(printArea);
+
+/* CLIP PATH – allt hålls inom skalet */
+canvas.clipPath = new fabric.Rect({
+  left: 30,
+  top: 30,
+  width: 280,
+  height: 620,
+  rx: 46,
+  ry: 46,
+  absolutePositioned: true
+});
+
+/* =========================
+   UPLOAD – 100 % STABIL
+   ========================= */
+document.getElementById('upload').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    fabric.Image.fromURL(e.target.result, function (img) {
+
+      img.set({
+        left: 70,
+        top: 200,
+        scaleX: 0.4,
+        scaleY: 0.4,
+        cornerStyle: 'circle',
+        cornerColor: '#000',
+        borderColor: '#000',
+        transparentCorners: false
+      });
+
+      canvas.add(img);
+      canvas.setActiveObject(img);
+      canvas.renderAll();
+
     });
+  };
 
-    /* Telefon / tryckyta */
-    const phone = new fabric.Rect({
-      left: 20,
-      top: 20,
-      width: 280,
-      height: 600,
-      rx: 44,
-      ry: 44,
-      fill: '#f6f6f6',
-      selectable: false,
-      evented: false
-    });
+  reader.readAsDataURL(file);
+  this.value = '';
+});
 
-    canvas.add(phone);
-    canvas.sendToBack(phone);
+/* =========================
+   DELETE
+   ========================= */
+document.getElementById('delete').onclick = () => {
+  const obj = canvas.getActiveObject();
+  if (obj && obj !== printArea) {
+    canvas.remove(obj);
+  }
+};
 
-    /* Upload image – STABIL VERSION */
-    const uploadInput = document.getElementById('uploadImage');
+/* =========================
+   ZOOM
+   ========================= */
+let zoom = 1;
 
-    uploadInput.addEventListener('change', function () {
-      const file = this.files[0];
-      if (!file) return;
+document.getElementById('zoomIn').onclick = () => {
+  zoom = Math.min(2, zoom + 0.1);
+  canvas.setZoom(zoom);
+};
 
-      const reader = new FileReader();
+document.getElementById('zoomOut').onclick = () => {
+  zoom = Math.max(0.5, zoom - 0.1);
+  canvas.setZoom(zoom);
+};
 
-      reader.onload = function (event) {
-        fabric.Image.fromURL(
-          event.target.result,
-          function (img) {
-            img.scaleToWidth(200);
-            img.set({
-              left: 60,
-              top: 220,
-              cornerStyle: 'circle',
-              cornerColor: '#000',
-              borderColor: '#000',
-              transparentCorners: false
-            });
-
-            canvas.add(img);
-            canvas.setActiveObject(img);
-            canvas.renderAll();
-          },
-          { crossOrigin: 'anonymous' }
-        );
-      };
-
-      reader.readAsDataURL(file);
-
-      // reset så samma fil kan laddas igen
-      this.value = '';
-    });
-
-    /* Delete */
-    document.getElementById('deleteObject').onclick = () => {
-      const obj = canvas.getActiveObject();
-      if (obj && obj !== phone) {
-        canvas.remove(obj);
-      }
-    };
-
-    /* Zoom */
-    let zoom = 1;
-
-    document.getElementById('zoomIn').onclick = () => {
-      zoom = Math.min(2, zoom + 0.1);
-      canvas.setZoom(zoom);
-    };
-
-    document.getElementById('zoomOut').onclick = () => {
-      zoom = Math.max(0.5, zoom - 0.1);
-      canvas.setZoom(zoom);
-    };
-
-    document.getElementById('resetView').onclick = () => {
-      zoom = 1;
-      canvas.setZoom(1);
-      canvas.absolutePan({ x: 0, y: 0 });
-    };
-  </script>
+document.getElementById('reset').onclick = () => {
+  zoom = 1;
+  canvas.setZoom(1);
+  canvas.absolutePan({ x: 0, y: 0 });
+};
+</script>
 
 </body>
 </html>
