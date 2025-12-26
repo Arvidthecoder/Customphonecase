@@ -2,37 +2,32 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<title>Designa ditt telefonskal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Designa ditt telefonskal</title>
 
-<!-- Fabric -->
+<!-- Fabric.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 
 <style>
 :root {
-  --bg: #0c0c0c;
+  --bg: #0b0b0b;
   --panel: #141414;
   --border: #2a2a2a;
   --text: #f5f5f5;
-  --muted: #9a9a9a;
   --accent: #ffffff;
 }
 
-* {
-  box-sizing: border-box;
+body, html {
+  margin:0;
+  padding:0;
+  height:100%;
+  width:100%;
+  display:flex;
+  background: var(--bg);
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  height: 100vh;
-  display: flex;
-  overflow: hidden;
-}
-
-/* Sidebar */
 .sidebar {
   width: 260px;
   background: var(--panel);
@@ -40,13 +35,10 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.sidebar h1 {
-  font-size: 15px;
-  margin-bottom: 10px;
-}
+.sidebar h1 { font-size: 16px; margin-bottom:10px; }
 
 .btn {
   background: none;
@@ -56,176 +48,193 @@ body {
   border-radius: 10px;
   cursor: pointer;
   text-align: left;
+  transition: 0.2s;
 }
 
-.btn:hover {
-  border-color: var(--accent);
-}
+.btn:hover { border-color: var(--accent); background: rgba(255,255,255,0.03); }
 
-input[type=file] {
-  display: none;
-}
+input[type=file] { display:none; }
 
-/* Main */
-.main {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+.main { flex:1; display:flex; justify-content:center; align-items:center; overflow:hidden; }
 
 .canvas-wrap {
   background: #161616;
   padding: 28px;
-  border-radius: 30px;
-  box-shadow: 0 40px 100px rgba(0,0,0,.6);
+  border-radius: 28px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6);
 }
 
 canvas {
   background: #101010;
   border-radius: 36px;
+  touch-action: none;
 }
 
-/* Footer */
 .footer {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  gap:10px;
 }
 </style>
 </head>
-
 <body>
 
-<!-- SIDEBAR -->
+<!-- Sidebar -->
 <div class="sidebar">
-  <h1>Designverktyg</h1>
+  <h1>Designa ditt skal</h1>
 
-  <label class="btn">
-    Ladda upp bild
-    <input type="file" id="upload" accept="image/*">
-  </label>
-
-  <button class="btn" id="delete">Ta bort markerat</button>
+  <label class="btn">Ladda upp bild<input type="file" id="uploadImage" accept="image/*"></label>
+  <button class="btn" id="addText">Lägg till text</button>
+  <button class="btn" id="deleteObject">Ta bort markerat</button>
   <button class="btn" id="zoomIn">Zoom +</button>
   <button class="btn" id="zoomOut">Zoom −</button>
-  <button class="btn" id="reset">Återställ vy</button>
+  <button class="btn" id="resetView">Återställ vy</button>
 </div>
 
-<!-- CANVAS -->
+<!-- Canvas -->
 <div class="main">
   <div class="canvas-wrap">
-    <canvas id="canvas" width="340" height="680"></canvas>
+    <canvas id="designer" width="340" height="680"></canvas>
   </div>
 </div>
 
-<!-- FOOTER -->
+<!-- Footer -->
 <div class="footer">
-  <button class="btn">Klar (export senare)</button>
+  <button class="btn" id="exportPNG">Exportera PNG</button>
 </div>
 
 <script>
-/* =========================
-   CANVAS INIT (KRITISK DEL)
-   ========================= */
-const canvas = new fabric.Canvas('canvas', {
+/* =====================
+   CANVAS INIT
+===================== */
+const canvas = new fabric.Canvas('designer', {
   preserveObjectStacking: true,
   selection: true
 });
 
-/* =========================
-   TRYCKYTA / TELEFON
-   ========================= */
-const printArea = new fabric.Rect({
-  left: 30,
-  top: 30,
-  width: 280,
-  height: 620,
-  rx: 46,
-  ry: 46,
-  fill: '#f7f7f7',
-  selectable: false,
-  evented: false
+/* =====================
+   TRYCKYTA
+===================== */
+const phoneRect = new fabric.Rect({
+  left:30,
+  top:30,
+  width:280,
+  height:620,
+  rx:46,
+  ry:46,
+  fill:'#f7f7f7',
+  selectable:false,
+  evented:false
 });
+canvas.add(phoneRect);
+canvas.sendToBack(phoneRect);
 
-canvas.add(printArea);
-canvas.sendToBack(printArea);
-
-/* CLIP PATH – allt hålls inom skalet */
 canvas.clipPath = new fabric.Rect({
-  left: 30,
-  top: 30,
-  width: 280,
-  height: 620,
-  rx: 46,
-  ry: 46,
-  absolutePositioned: true
+  left:30,
+  top:30,
+  width:280,
+  height:620,
+  rx:46,
+  ry:46,
+  absolutePositioned:true
 });
 
-/* =========================
-   UPLOAD – 100 % STABIL
-   ========================= */
-document.getElementById('upload').addEventListener('change', function () {
+/* =====================
+   UPLOAD IMAGE
+===================== */
+document.getElementById('uploadImage').addEventListener('change', function(){
   const file = this.files[0];
-  if (!file) return;
+  if(!file) return;
 
   const reader = new FileReader();
-
-  reader.onload = function (e) {
-    fabric.Image.fromURL(e.target.result, function (img) {
-
+  reader.onload = function(e){
+    fabric.Image.fromURL(e.target.result, function(img){
       img.set({
-        left: 70,
-        top: 200,
-        scaleX: 0.4,
-        scaleY: 0.4,
-        cornerStyle: 'circle',
-        cornerColor: '#000',
-        borderColor: '#000',
-        transparentCorners: false
+        left:70,
+        top:200,
+        scaleX:0.4,
+        scaleY:0.4,
+        cornerStyle:'circle',
+        cornerColor:'#000',
+        borderColor:'#000',
+        transparentCorners:false
       });
-
       canvas.add(img);
       canvas.setActiveObject(img);
       canvas.renderAll();
-
-    });
+    }, { crossOrigin:'anonymous' });
   };
-
   reader.readAsDataURL(file);
-  this.value = '';
+  this.value='';
 });
 
-/* =========================
-   DELETE
-   ========================= */
-document.getElementById('delete').onclick = () => {
+/* =====================
+   ADD TEXT
+===================== */
+document.getElementById('addText').onclick = ()=>{
+  const text = new fabric.IText('Din text här', {
+    left: 100,
+    top: 50,
+    fill:'#fff',
+    fontSize:24,
+    editable:true,
+    cornerStyle:'circle',
+    cornerColor:'#000',
+    borderColor:'#000',
+    transparentCorners:false
+  });
+  canvas.add(text);
+  canvas.setActiveObject(text);
+};
+
+/* =====================
+   DELETE OBJECT
+===================== */
+document.getElementById('deleteObject').onclick = ()=>{
   const obj = canvas.getActiveObject();
-  if (obj && obj !== printArea) {
-    canvas.remove(obj);
-  }
+  if(obj && obj!==phoneRect) canvas.remove(obj);
 };
 
-/* =========================
+/* =====================
    ZOOM
-   ========================= */
-let zoom = 1;
-
-document.getElementById('zoomIn').onclick = () => {
-  zoom = Math.min(2, zoom + 0.1);
+===================== */
+let zoom=1;
+document.getElementById('zoomIn').onclick = ()=>{
+  zoom=Math.min(2,zoom+0.1);
   canvas.setZoom(zoom);
 };
-
-document.getElementById('zoomOut').onclick = () => {
-  zoom = Math.max(0.5, zoom - 0.1);
+document.getElementById('zoomOut').onclick = ()=>{
+  zoom=Math.max(0.5,zoom-0.1);
   canvas.setZoom(zoom);
 };
-
-document.getElementById('reset').onclick = () => {
-  zoom = 1;
+document.getElementById('resetView').onclick = ()=>{
+  zoom=1;
   canvas.setZoom(1);
-  canvas.absolutePan({ x: 0, y: 0 });
+  canvas.absolutePan({x:0,y:0});
 };
+
+/* =====================
+   EXPORT PNG
+===================== */
+document.getElementById('exportPNG').onclick = ()=>{
+  const dataURL = canvas.toDataURL({format:'png', multiplier:2});
+  const link = document.createElement('a');
+  link.href=dataURL;
+  link.download='telefon_skal.png';
+  link.click();
+};
+
+/* =====================
+   TOUCH SUPPORT (MOBIL)
+===================== */
+canvas.on('touch:gesture', function(e){
+  if(e.e.touches && e.e.touches.length==2){
+    const delta = e.self.scale;
+    canvas.setZoom(delta);
+  }
+});
 </script>
 
 </body>
