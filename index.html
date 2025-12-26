@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <title>Designa ditt telefonskal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fabric.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --panel: #161616;
+      --border: #2a2a2a;
+      --text: #eaeaea;
+      --muted: #999;
+      --accent: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 10px;
+    }
+
+    .btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      transition: all .2s;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+    }
+
+    .btn.small {
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Canvas area */
+    .main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .canvas-wrapper {
+      background: #1c1c1c;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+
+    canvas {
+      background: #111;
+      border-radius: 24px;
+    }
+
+    /* Footer controls */
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h1>Designverktyg</h1>
+
+    <label class="btn">
+      Ladda upp bild
+      <input type="file" id="uploadImage" accept="image/*">
+    </label>
+
+    <button class="btn small" id="deleteObject">Ta bort markerat</button>
+    <button class="btn small" id="zoomIn">Zoom +</button>
+    <button class="btn small" id="zoomOut">Zoom −</button>
+    <button class="btn small" id="resetView">Återställ vy</button>
+  </div>
+
+  <!-- Canvas -->
+  <div class="main">
+    <div class="canvas-wrapper">
+      <canvas id="designer" width="300" height="620"></canvas>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn">Klar (export senare)</button>
+  </div>
+
+  <script>
+    const canvas = new fabric.Canvas('designer', {
+      preserveObjectStacking: true
+    });
+
+    // Telefonform (ej valbar)
+    const phone = new fabric.Rect({
+      left: 20,
+      top: 20,
+      width: 260,
+      height: 580,
+      rx: 40,
+      ry: 40,
+      fill: '#f5f5f5',
+      selectable: false,
+      evented: false
+    });
+
+    canvas.add(phone);
+    canvas.sendToBack(phone);
+
+    // Upload image
+    document.getElementById('uploadImage').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = f => {
+        fabric.Image.fromURL(f.target.result, img => {
+          img.scaleToWidth(180);
+          img.left = 60;
+          img.top = 200;
+          img.cornerStyle = 'circle';
+          img.cornerColor = '#000';
+          img.borderColor = '#000';
+          img.transparentCorners = false;
+
+          canvas.add(img);
+          canvas.setActiveObject(img);
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Delete
+    document.getElementById('deleteObject').onclick = () => {
+      const obj = canvas.getActiveObject();
+      if (obj && obj !== phone) canvas.remove(obj);
+    };
+
+    // Zoom
+    let zoom = 1;
+    document.getElementById('zoomIn').onclick = () => {
+      zoom = Math.min(2, zoom + 0.1);
+      canvas.setZoom(zoom);
+    };
+    document.getElementById('zoomOut').onclick = () => {
+      zoom = Math.max(0.5, zoom - 0.1);
+      canvas.setZoom(zoom);
+    };
+    document.getElementById('resetView').onclick = () => {
+      zoom = 1;
+      canvas.setZoom(1);
+      canvas.absolutePan({ x: 0, y: 0 });
+    };
+  </script>
+
+</body>
+</html>
